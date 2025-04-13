@@ -1,50 +1,54 @@
 import streamlit as st
+from gtts import gTTS
+import os
 
-# 页面配置
-st.set_page_config(
-    page_title="链盟跨境反诈平台",
-    page_icon=":shield:",
-    layout="wide"
-)
+# 设置页面配置
+st.set_page_config(page_title="东南亚与中文反诈语音库", page_icon=":shield:")
 
-# 自定义CSS
-st.markdown(
-    """
-    <style>
-    .st-header {color: #005F9F;}
-    .st-table th, .st-table td {text-align: left; padding: 8px;}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# 定义反诈知识数据
+anti_fraud_knowledge = {
+    "中文": [
+        "网络刷单多陷阱，轻松赚钱是幻影。先给甜头引上钩，大额投入全赔净。",
+        "交友平台要谨慎，甜言蜜语藏陷阱。索要钱财别轻信，爱情不是交易品。"
+    ],
+    "东南亚（以泰语为例）": [
+        "การทำงานล่วงเวลาภายในเครือข่ายมีข้อผิดพลาดมากมาย ความสำเร็จในการหาเงินง่ายๆ เป็นภาพลวงตา. ให้ความรู้สึกดีเพื่อดึงดูดเข้ามา และการลงทุนจำนวนมากจะสูญเสียทั้งหมด.",
+        "ต้องระมัดระวังในแพลตฟอร์มการแชท คำพูดหวาน ๆ มีข้อผิดพลาดอยู่เบื้องหลัง. อย่าเชื่อคำขอเงิน เพื่อนรักไม่ใช่สิ่งซื้อขาย."
+    ]
+}
 
-# 主标题
-st.title("《链盟：基于联邦学习与区块链的中国-东盟跨境反诈协同防御平台》")
-st.divider()
+# 页面标题
+st.title("东南亚与中文反诈语音库")
 
-# 项目背景
-st.header("一、项目背景")
-st.subheader("1. 政策背景")
-st.markdown("- 中国-东盟《落实战略伙伴关系联合宣言行动计划（2021-2025）》")
-st.markdown("- 2023年《中老缅泰柬越六国联合打击电诈行动》")
+# 选择语言
+language = st.selectbox("选择语言", list(anti_fraud_knowledge.keys()))
 
-st.subheader("2. 社会痛点")
-st.markdown("- **数据**：2022年东南亚电诈涉案超300亿美元，中缅边境窝点超2000个")
-st.markdown("- **问题**：语言障碍、证据链断裂、文化冲突")
-st.divider()
+# 显示反诈知识列表
+st.subheader(f"{language} 反诈知识")
+for index, knowledge in enumerate(anti_fraud_knowledge[language]):
+    st.write(f"{index + 1}. {knowledge}")
 
-# 技术架构图
-st.header("二、技术架构图")
-st.graphviz_chart("""digraph { graph [rankdir=LR]; A->B; A->C; B->D; C->D; D->E; node [label="多语言诈骗识别层", fontname="微软雅黑"]; B [label="联邦学习数据协同层"]; C [label="区块链存证层"]; D [label="跨境预警决策层"]; E [label="多模态反诈应用层"]; }""")
-st.divider()
+    # 播放语音按钮
+    if st.button(f"播放 {language} 第 {index + 1} 条语音"):
+        try:
+            # 根据语言选择合适的语言代码
+            if language == "中文":
+                lang_code = "zh-CN"
+            elif language == "东南亚（以泰语为例）":
+                lang_code = "th"
 
-# 核心功能模块
-st.header("三、核心功能模块")
-data = [["东南亚方言反诈语音库", "Wav2Vec 2.0迁移学习+标注", "100小时语音数据集"], ["跨境证据链管理系统", "Hyperledger Fabric存证", "中老警方3D可视化案例"], ["文化适配宣传生成器", "Stable Diffusion+提示词", "印尼皮影戏短视频"]]
-st.table(data)
-st.divider()
+            # 使用 gTTS 将文本转换为语音
+            tts = gTTS(text=knowledge, lang=lang_code)
+            audio_file = f"audio_{index}.mp3"
+            tts.save(audio_file)
 
-# 其他模块（商业模式、社会价值等按文档补充...）
+            # 在 Streamlit 中播放语音
+            with open(audio_file, "rb") as f:
+                audio_bytes = f.read()
+            st.audio(audio_bytes, format="audio/mp3")
 
-if __name__ == "__main__":
-    pass
+            # 删除临时音频文件
+            os.remove(audio_file)
+        except Exception as e:
+            st.error(f"语音播放出错: {e}")
+    
